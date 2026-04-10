@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ninja Fruit Vision</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-1: #080b17;
+            --bg-2: #141a31;
+            --bg-3: #1a2444;
+            --panel: rgba(8, 12, 27, 0.72);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --text: #fef7e8;
+            --muted: #b7c1e1;
+            --accent: #ff8a3d;
+            --accent-2: #ffe66d;
+            --success: #7cf29a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255, 138, 61, 0.25), transparent 24%),
+                radial-gradient(circle at 80% 15%, rgba(124, 242, 154, 0.18), transparent 28%),
+                radial-gradient(circle at 50% 90%, rgba(255, 230, 109, 0.14), transparent 26%),
+                linear-gradient(145deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
+            color: var(--text);
+            font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: auto;
+            border-radius: 999px;
+            filter: blur(70px);
+            pointer-events: none;
+            opacity: 0.45;
+        }
+
+        body::before {
+            width: 32vw;
+            height: 32vw;
+            left: -8vw;
+            bottom: -8vw;
+            background: rgba(255, 93, 122, 0.42);
+        }
+
+        body::after {
+            width: 28vw;
+            height: 28vw;
+            right: -6vw;
+            top: -6vw;
+            background: rgba(96, 217, 255, 0.22);
+        }
+
+        .app-shell {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 4;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-width: min(86vw, 520px);
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            width: fit-content;
+            padding: 10px 16px;
+            border: 1px solid var(--panel-border);
+            border-radius: 999px;
+            background: rgba(9, 12, 23, 0.68);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.26);
+        }
+
+        .brand-mark {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #181114;
+            font-family: "Bungee", cursive;
+            font-size: 0.95rem;
+        }
+
+        .brand-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .brand-copy strong {
+            font-family: "Bungee", cursive;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .brand-copy span {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(92px, 1fr));
+            gap: 12px;
+        }
+
+        .stat-card {
+            padding: 12px 14px;
+            border: 1px solid var(--panel-border);
+            border-radius: 18px;
+            background: var(--panel);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+        }
+
+        .stat-card span {
+            display: block;
+            color: var(--muted);
+            font-size: 0.82rem;
+            margin-bottom: 6px;
+        }
+
+        .stat-card strong {
+            display: block;
+            font-size: clamp(1.2rem, 2vw, 1.8rem);
+        }
+
+        .status-bar {
+            width: fit-content;
+            max-width: 100%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(6, 9, 17, 0.65);
+            color: #dce3ff;
+            font-size: 0.92rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .intro-card {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            z-index: 5;
+            width: min(92vw, 500px);
+            padding: 28px;
+            border-radius: 28px;
+            transform: translate(-50%, -50%);
+            background:
+                linear-gradient(155deg, rgba(255, 138, 61, 0.18), rgba(255, 255, 255, 0.02) 45%),
+                rgba(8, 12, 27, 0.82);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+            backdrop-filter: blur(18px);
+        }
+
+        .intro-card.hidden {
+            display: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 230, 109, 0.12);
+            color: var(--accent-2);
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .intro-card h1 {
+            margin: 16px 0 12px;
+            font-family: "Bungee", cursive;
+            font-size: clamp(1.9rem, 5vw, 3rem);
+            line-height: 1.02;
+        }
+
+        .intro-card p {
+            margin: 0 0 18px;
+            color: #d5ddfb;
+            line-height: 1.65;
+            font-size: 1rem;
+        }
+
+        .bullet-list {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .bullet {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            color: #eef2ff;
+            font-size: 0.95rem;
+        }
+
+        .bullet::before {
+            content: "";
+            width: 10px;
+            height: 10px;
+            margin-top: 0.35rem;
+            border-radius: 50%;
+            flex: 0 0 auto;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: 0 0 14px rgba(255, 138, 61, 0.52);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: 0;
+            border-radius: 999px;
+            padding: 14px 22px;
+            font-family: "Space Grotesk", "Segoe UI", sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1410;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            cursor: pointer;
+            box-shadow: 0 14px 28px rgba(255, 138, 61, 0.34);
+            transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 34px rgba(255, 138, 61, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: wait;
+            transform: none;
+        }
+
+        .secondary-note {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .camera-dock {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            z-index: 4;
+            width: min(30vw, 340px);
+            min-width: 250px;
+            padding: 14px;
+            border-radius: 22px;
+            border: 1px solid var(--panel-border);
+            background: rgba(8, 12, 27, 0.78);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 20px 46px rgba(0, 0, 0, 0.34);
+        }
+
+        .camera-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .camera-head strong {
+            font-size: 1rem;
+        }
+
+        .camera-head span {
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .camera-frame {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            border-radius: 18px;
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent),
+                #05070d;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+        }
+
+        #cameraFeed,
+        #handCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        #cameraFeed {
+            opacity: 0.88;
+        }
+
+        #handCanvas {
+            pointer-events: none;
+        }
+
+        .camera-footer {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 0.84rem;
+            line-height: 1.5;
+        }
+
+        .pulse-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 14px rgba(124, 242, 154, 0.56);
+            animation: pulse 1.4s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.85;
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .hud {
+                right: 20px;
+                max-width: none;
+            }
+
+            .camera-dock {
+                width: min(38vw, 320px);
+            }
+        }
+
+        @media (max-width: 680px) {
+            .hud {
+                left: 14px;
+                right: 14px;
+                top: 14px;
+                max-width: none;
+            }
+
+            .brand {
+                width: 100%;
+            }
+
+            .stat-grid {
+                gap: 8px;
+            }
+
+            .camera-dock {
+                right: 14px;
+                bottom: 14px;
+                width: min(52vw, 280px);
+                min-width: 210px;
+                padding: 12px;
+            }
+
+            .intro-card {
+                padding: 22px;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .camera-dock {
+                width: calc(100vw - 28px);
+                min-width: 0;
+            }
+
+            .stat-card {
+                padding: 10px 12px;
+            }
+
+            .status-bar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="hud">
+            <div class="brand">
+                <div class="brand-mark">NF</div>
+                <div class="brand-copy">
+                    <strong>Ninja Fruit Vision</strong>
+                    <span>Use your index finger to paint a glowing fruit blade.</span>
+                </div>
+            </div>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <span>Score</span>
+                    <strong id="scoreValue">0</strong>
+                </div>
+                <div class="stat-card">
+                    <span>Combo</span>
+                    <strong id="comboValue">x0</strong>
+                </div>
+                <div class="stat-card">
+                    <span>Lives</span>
+                    <strong id="livesValue">3</strong>
+                </div>
+            </div>
+
+            <div class="status-bar" id="statusBar">Press start, allow camera access, then swing your index finger to slice fruit.</div>
+        </div>
+
+        <div class="intro-card" id="introCard">
+            <span class="eyebrow">Gesture Gameplay</span>
+            <h1 id="introTitle">Ninja Fruit Vision</h1>
+            <p id="introText">A hand-tracking fruit slicing game driven by your camera. The fingertip of your index finger becomes the blade trail on the main stage.</p>
+
+            <div class="bullet-list">
+                <div class="bullet">The bottom-right panel always shows the live camera feed with hand skeleton lines.</div>
+                <div class="bullet">The main canvas turns fast fingertip motion into a bright slicing trail.</div>
+                <div class="bullet">Missed fruit costs lives, so keep the finger moving and chain combos.</div>
+            </div>
+
+            <div class="actions">
+                <button id="startButton" type="button">Start Camera And Play</button>
+                <span class="secondary-note" id="helperText">Best results come from good lighting and a clear view of your hand.</span>
+            </div>
+        </div>
+
+        <div class="camera-dock">
+            <div class="camera-head">
+                <div>
+                    <strong>Gesture Capture</strong>
+                    <span>Camera + skeleton overlay</span>
+                </div>
+                <span class="pulse-dot" title="Live tracking"></span>
+            </div>
+            <div class="camera-frame">
+                <video id="cameraFeed" autoplay playsinline muted></video>
+                <canvas id="handCanvas"></canvas>
+            </div>
+            <div class="camera-footer">
+                The camera preview stays docked in the bottom-right corner and draws the tracked hand bones in real time.
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script>
+        const gameCanvas = document.getElementById("gameCanvas");
+        const gameCtx = gameCanvas.getContext("2d");
+        const handCanvas = document.getElementById("handCanvas");
+        const handCtx = handCanvas.getContext("2d");
+        const cameraFeed = document.getElementById("cameraFeed");
+
+        const scoreValue = document.getElementById("scoreValue");
+        const comboValue = document.getElementById("comboValue");
+        const livesValue = document.getElementById("livesValue");
+        const statusBar = document.getElementById("statusBar");
+        const introCard = document.getElementById("introCard");
+        const introTitle = document.getElementById("introTitle");
+        const introText = document.getElementById("introText");
+        const helperText = document.getElementById("helperText");
+        const startButton = document.getElementById("startButton");
+
+        const fruitTypes = [
+            { icon: "🍉", colorA: "#7ef0a0", colorB: "#2fa756", juice: "rgba(154, 255, 180, 0.95)" },
+            { icon: "🍊", colorA: "#ffd35c", colorB: "#ff8d1a", juice: "rgba(255, 230, 156, 0.95)" },
+            { icon: "🍎", colorA: "#ff6b73", colorB: "#cf2742", juice: "rgba(255, 157, 168, 0.95)" },
+            { icon: "🥝", colorA: "#bdf06b", colorB: "#628d22", juice: "rgba(219, 255, 167, 0.95)" },
+            { icon: "🍋", colorA: "#fff78d", colorB: "#dcb92b", juice: "rgba(255, 250, 178, 0.95)" },
+            { icon: "🍑", colorA: "#ffb08a", colorB: "#ff7488", juice: "rgba(255, 208, 192, 0.95)" }
+        ];
+
+        const state = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            dpr: Math.min(window.devicePixelRatio || 1, 2),
+            running: false,
+            modelReady: false,
+            gameOver: false,
+            score: 0,
+            combo: 0,
+            bestScore: 0,
+            lives: 3,
+            fruits: [],
+            particles: [],
+            trail: [],
+            lastFrame: 0,
+            spawnTimer: 0,
+            spawnInterval: 920,
+            difficultyClock: 0,
+            lastFingerPoint: null,
+            handDetected: false,
+            fingerPoint: null
+        };
+
+        let hands = null;
+        let cameraController = null;
+        let visionBootPromise = null;
+
+        function setStatus(message) {
+            statusBar.textContent = message;
+        }
+
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        function randomBetween(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function resizeCanvas() {
+            state.width = window.innerWidth;
+            state.height = window.innerHeight;
+            state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+            gameCanvas.width = Math.floor(state.width * state.dpr);
+            gameCanvas.height = Math.floor(state.height * state.dpr);
+            gameCanvas.style.width = state.width + "px";
+            gameCanvas.style.height = state.height + "px";
+            gameCtx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+        }
+
+        function updateHud() {
+            scoreValue.textContent = String(state.score);
+            comboValue.textContent = "x" + state.combo;
+            livesValue.textContent = String(state.lives);
+        }
+
+        function resetGame() {
+            state.running = true;
+            state.gameOver = false;
+            state.score = 0;
+            state.combo = 0;
+            state.lives = 3;
+            state.fruits = [];
+            state.particles = [];
+            state.trail = [];
+            state.spawnTimer = 160;
+            state.spawnInterval = 920;
+            state.difficultyClock = 0;
+            state.lastFingerPoint = null;
+            introCard.classList.add("hidden");
+            updateHud();
+            setStatus("Camera is ready. Swing your index finger quickly to slice fruit.");
+        }
+
+        function showIntroForGameOver() {
+            introTitle.textContent = "Game Over";
+            introText.textContent = `Final score ${state.score}. Best score ${state.bestScore}. Hit start to jump back in.`;
+            helperText.textContent = "The camera stays active, so you can restart immediately.";
+            startButton.textContent = "Play Again";
+            startButton.disabled = false;
+            introCard.classList.remove("hidden");
+        }
+
+        function restoreIntroCopy() {
+            introTitle.textContent = "Ninja Fruit Vision";
+            introText.textContent = "A hand-tracking fruit slicing game driven by your camera. The fingertip of your index finger becomes the blade trail on the main stage.";
+            helperText.textContent = "Best results come from good lighting and a clear view of your hand.";
+        }
+
+        function spawnFruit() {
+            const type = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
+            const radius = randomBetween(30, 52);
+            const launchLeft = Math.random() < 0.5;
+            const x = randomBetween(state.width * 0.18, state.width * 0.82);
+            const vx = randomBetween(launchLeft ? 80 : -240, launchLeft ? 240 : -80);
+            const vy = randomBetween(-980, -760) - state.difficultyClock * 8;
+
+            state.fruits.push({
+                x,
+                y: state.height + radius + 10,
+                vx,
+                vy,
+                radius,
+                rotation: randomBetween(0, Math.PI * 2),
+                spin: randomBetween(-2.5, 2.5),
+                icon: type.icon,
+                colorA: type.colorA,
+                colorB: type.colorB,
+                juice: type.juice,
+                sliced: false,
+                missed: false
+            });
+        }
+
+        function emitJuice(x, y, color, burst = 14) {
+            for (let i = 0; i < burst; i += 1) {
+                const angle = randomBetween(0, Math.PI * 2);
+                const speed = randomBetween(80, 280);
+                const life = randomBetween(0.35, 0.75);
+                state.particles.push({
+                    x,
+                    y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 40,
+                    life,
+                    maxLife: life,
+                    size: randomBetween(4, 10),
+                    color
+                });
+            }
+        }
+
+        function sliceFruit(fruit, impactPoint) {
+            fruit.sliced = true;
+            state.score += 10 + Math.max(0, state.combo - 1) * 2;
+            state.combo += 1;
+            state.bestScore = Math.max(state.bestScore, state.score);
+            updateHud();
+            emitJuice(fruit.x, fruit.y, fruit.juice, 20);
+            emitJuice(impactPoint.x, impactPoint.y, "rgba(255,255,255,0.92)", 6);
+        }
+
+        function loseLife() {
+            state.lives -= 1;
+            state.combo = 0;
+            updateHud();
+
+            if (state.lives <= 0) {
+                state.running = false;
+                state.gameOver = true;
+                state.bestScore = Math.max(state.bestScore, state.score);
+                setStatus("Too many fruit escaped. Press start to play again.");
+                showIntroForGameOver();
+            } else {
+                setStatus("A fruit escaped. Keep slicing to recover.");
+            }
+        }
+
+        function distancePointToSegment(pointX, pointY, ax, ay, bx, by) {
+            const abx = bx - ax;
+            const aby = by - ay;
+            const abLengthSq = abx * abx + aby * aby;
+
+            if (abLengthSq === 0) {
+                return Math.hypot(pointX - ax, pointY - ay);
+            }
+
+            const t = clamp(((pointX - ax) * abx + (pointY - ay) * aby) / abLengthSq, 0, 1);
+            const closestX = ax + abx * t;
+            const closestY = ay + aby * t;
+            return Math.hypot(pointX - closestX, pointY - closestY);
+        }
+
+        function checkTrailHits(previousPoint, currentPoint) {
+            if (!previousPoint || !currentPoint.active) {
+                return;
+            }
+
+            for (const fruit of state.fruits) {
+                if (fruit.sliced) {
+                    continue;
+                }
+
+                const distance = distancePointToSegment(
+                    fruit.x,
+                    fruit.y,
+                    previousPoint.x,
+                    previousPoint.y,
+                    currentPoint.x,
+                    currentPoint.y
+                );
+
+                if (distance <= fruit.radius + currentPoint.width * 0.28) {
+                    sliceFruit(fruit, currentPoint);
+                }
+            }
+        }
+
+        function pushFingerTrail(normalizedPoint) {
+            const now = performance.now();
+            const point = {
+                x: (1 - normalizedPoint.x) * state.width,
+                y: normalizedPoint.y * state.height,
+                time: now,
+                width: 18,
+                active: false
+            };
+
+            if (state.lastFingerPoint) {
+                const elapsed = Math.max(now - state.lastFingerPoint.time, 1);
+                const distance = Math.hypot(point.x - state.lastFingerPoint.x, point.y - state.lastFingerPoint.y);
+                const speed = distance / elapsed;
+                point.active = speed > 0.55;
+                point.width = clamp(14 + speed * 18, 16, 34);
+                checkTrailHits(state.lastFingerPoint, point);
+            }
+
+            state.trail.push(point);
+            state.lastFingerPoint = point;
+            state.fingerPoint = point;
+        }
+
+        function updateGame(delta) {
+            if (!state.running) {
+                return;
+            }
+
+            state.difficultyClock += delta;
+            state.spawnInterval = clamp(920 - state.difficultyClock * 16, 430, 920);
+            state.spawnTimer += delta * 1000;
+
+            if (state.spawnTimer >= state.spawnInterval) {
+                state.spawnTimer = 0;
+                spawnFruit();
+
+                if (Math.random() > 0.6 && state.difficultyClock > 8) {
+                    window.setTimeout(() => {
+                        if (state.running) {
+                            spawnFruit();
+                        }
+                    }, 140);
+                }
+            }
+
+            const gravity = 1500;
+
+            for (const fruit of state.fruits) {
+                fruit.vy += gravity * delta;
+                fruit.x += fruit.vx * delta;
+                fruit.y += fruit.vy * delta;
+                fruit.rotation += fruit.spin * delta;
+
+                if (!fruit.sliced && fruit.y - fruit.radius > state.height + 12 && !fruit.missed) {
+                    fruit.missed = true;
+                    loseLife();
+                }
+            }
+
+            state.fruits = state.fruits.filter((fruit) => !fruit.sliced && fruit.y - fruit.radius < state.height + 140);
+
+            for (const particle of state.particles) {
+                particle.life -= delta;
+                particle.vy += 820 * delta;
+                particle.x += particle.vx * delta;
+                particle.y += particle.vy * delta;
+            }
+
+            state.particles = state.particles.filter((particle) => particle.life > 0);
+
+            const cutoff = performance.now() - 180;
+            state.trail = state.trail.filter((point) => point.time >= cutoff);
+
+            if (state.trail.length === 0) {
+                state.lastFingerPoint = null;
+            }
+        }
+
+        function drawBackdrop(now) {
+            const gradient = gameCtx.createLinearGradient(0, 0, state.width, state.height);
+            gradient.addColorStop(0, "#070b15");
+            gradient.addColorStop(0.45, "#111931");
+            gradient.addColorStop(1, "#201634");
+            gameCtx.fillStyle = gradient;
+            gameCtx.fillRect(0, 0, state.width, state.height);
+
+            const shimmer = now * 0.00028;
+
+            for (let i = 0; i < 4; i += 1) {
+                const px = state.width * (0.18 + i * 0.22) + Math.sin(shimmer + i) * 40;
+                const py = state.height * (0.18 + (i % 2) * 0.25) + Math.cos(shimmer * 1.2 + i) * 30;
+                const radius = 120 + i * 18;
+                const orb = gameCtx.createRadialGradient(px, py, 0, px, py, radius);
+                orb.addColorStop(0, i % 2 === 0 ? "rgba(255, 138, 61, 0.18)" : "rgba(124, 242, 154, 0.16)");
+                orb.addColorStop(1, "rgba(255, 255, 255, 0)");
+                gameCtx.fillStyle = orb;
+                gameCtx.beginPath();
+                gameCtx.arc(px, py, radius, 0, Math.PI * 2);
+                gameCtx.fill();
+            }
+
+            gameCtx.strokeStyle = "rgba(255, 255, 255, 0.035)";
+            gameCtx.lineWidth = 1;
+            for (let y = state.height * 0.16; y < state.height; y += 90) {
+                gameCtx.beginPath();
+                gameCtx.moveTo(0, y);
+                gameCtx.quadraticCurveTo(state.width * 0.5, y - 18, state.width, y + 10);
+                gameCtx.stroke();
+            }
+        }
+
+        function drawFruit(fruit) {
+            gameCtx.save();
+            gameCtx.translate(fruit.x, fruit.y);
+            gameCtx.rotate(fruit.rotation);
+
+            gameCtx.shadowColor = fruit.colorB;
+            gameCtx.shadowBlur = 24;
+
+            const body = gameCtx.createRadialGradient(
+                -fruit.radius * 0.24,
+                -fruit.radius * 0.3,
+                fruit.radius * 0.1,
+                0,
+                0,
+                fruit.radius
+            );
+            body.addColorStop(0, fruit.colorA);
+            body.addColorStop(1, fruit.colorB);
+
+            gameCtx.fillStyle = body;
+            gameCtx.beginPath();
+            gameCtx.arc(0, 0, fruit.radius, 0, Math.PI * 2);
+            gameCtx.fill();
+
+            gameCtx.shadowBlur = 0;
+            gameCtx.strokeStyle = "rgba(255,255,255,0.18)";
+            gameCtx.lineWidth = 2;
+            gameCtx.stroke();
+
+            gameCtx.fillStyle = "rgba(255,255,255,0.22)";
+            gameCtx.beginPath();
+            gameCtx.ellipse(-fruit.radius * 0.28, -fruit.radius * 0.28, fruit.radius * 0.28, fruit.radius * 0.17, -0.6, 0, Math.PI * 2);
+            gameCtx.fill();
+
+            gameCtx.fillStyle = "#8de969";
+            gameCtx.beginPath();
+            gameCtx.ellipse(0, -fruit.radius * 0.95, fruit.radius * 0.2, fruit.radius * 0.34, 0.2, 0, Math.PI * 2);
+            gameCtx.fill();
+
+            gameCtx.font = `${fruit.radius * 0.95}px "Segoe UI Emoji", sans-serif`;
+            gameCtx.textAlign = "center";
+            gameCtx.textBaseline = "middle";
+            gameCtx.fillText(fruit.icon, 0, fruit.radius * 0.08);
+            gameCtx.restore();
+        }
+
+        function drawTrail(now) {
+            if (state.trail.length < 2) {
+                return;
+            }
+
+            gameCtx.save();
+            gameCtx.lineCap = "round";
+            gameCtx.lineJoin = "round";
+
+            for (let i = 1; i < state.trail.length; i += 1) {
+                const previous = state.trail[i - 1];
+                const current = state.trail[i];
+                const age = clamp((now - current.time) / 180, 0, 1);
+                const opacity = 1 - age;
+
+                if (opacity <= 0.02) {
+                    continue;
+                }
+
+                gameCtx.strokeStyle = `rgba(255, ${Math.round(190 + opacity * 50)}, ${Math.round(140 + opacity * 60)}, ${0.14 + opacity * 0.48})`;
+                gameCtx.lineWidth = current.width * opacity;
+                gameCtx.shadowBlur = current.active ? 26 : 14;
+                gameCtx.shadowColor = current.active ? "rgba(255, 226, 109, 0.85)" : "rgba(255, 145, 92, 0.55)";
+                gameCtx.beginPath();
+                gameCtx.moveTo(previous.x, previous.y);
+                gameCtx.lineTo(current.x, current.y);
+                gameCtx.stroke();
+            }
+
+            if (state.fingerPoint) {
+                const age = clamp((now - state.fingerPoint.time) / 220, 0, 1);
+                const opacity = 1 - age;
+                if (opacity > 0.05) {
+                    gameCtx.fillStyle = `rgba(255, 244, 196, ${0.25 + opacity * 0.55})`;
+                    gameCtx.shadowColor = "rgba(255, 230, 109, 0.95)";
+                    gameCtx.shadowBlur = 30;
+                    gameCtx.beginPath();
+                    gameCtx.arc(state.fingerPoint.x, state.fingerPoint.y, 10 + opacity * 8, 0, Math.PI * 2);
+                    gameCtx.fill();
+                }
+            }
+
+            gameCtx.restore();
+        }
+
+        function drawParticles() {
+            for (const particle of state.particles) {
+                const opacity = clamp(particle.life / particle.maxLife, 0, 1);
+                gameCtx.globalAlpha = opacity;
+                gameCtx.fillStyle = particle.color;
+                gameCtx.beginPath();
+                gameCtx.arc(particle.x, particle.y, particle.size * opacity, 0, Math.PI * 2);
+                gameCtx.fill();
+            }
+            gameCtx.globalAlpha = 1;
+        }
+
+        function drawHandPrompt() {
+            if (!state.running || state.handDetected) {
+                return;
+            }
+
+            const text = "No hand detected. Move your hand into the bottom-right camera frame.";
+            gameCtx.save();
+            gameCtx.textAlign = "center";
+            gameCtx.textBaseline = "middle";
+            gameCtx.font = '600 18px "Space Grotesk", "Segoe UI", sans-serif';
+            gameCtx.fillStyle = "rgba(255, 245, 220, 0.86)";
+            gameCtx.fillText(text, state.width / 2, state.height - 60);
+            gameCtx.restore();
+        }
+
+        function render(now) {
+            drawBackdrop(now);
+            drawParticles();
+            for (const fruit of state.fruits) {
+                drawFruit(fruit);
+            }
+            drawTrail(now);
+            drawHandPrompt();
+        }
+
+        function gameLoop(now) {
+            if (!state.lastFrame) {
+                state.lastFrame = now;
+            }
+
+            const delta = Math.min((now - state.lastFrame) / 1000, 0.033);
+            state.lastFrame = now;
+
+            updateGame(delta);
+            render(now);
+            requestAnimationFrame(gameLoop);
+        }
+
+        function clearHandOverlay() {
+            handCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
+        }
+
+        function onHandResults(results) {
+            handCanvas.width = results.image.width;
+            handCanvas.height = results.image.height;
+            clearHandOverlay();
+
+            if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+                state.handDetected = false;
+                state.lastFingerPoint = null;
+                return;
+            }
+
+            state.handDetected = true;
+
+            for (const landmarks of results.multiHandLandmarks) {
+                drawConnectors(handCtx, landmarks, HAND_CONNECTIONS, {
+                    color: "#71ffe1",
+                    lineWidth: 3
+                });
+                drawLandmarks(handCtx, landmarks, {
+                    color: "#ffe66d",
+                    lineWidth: 1.2,
+                    radius: 3
+                });
+            }
+
+            const fingertip = results.multiHandLandmarks[0][8];
+            pushFingerTrail(fingertip);
+        }
+
+        async function setupVision() {
+            if (visionBootPromise) {
+                return visionBootPromise;
+            }
+
+            visionBootPromise = (async () => {
+                try {
+                    if (!window.Hands || !window.Camera) {
+                        throw new Error("MediaPipe scripts failed to load. Refresh with internet access and try again.");
+                    }
+
+                    hands = new Hands({
+                        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+                    });
+
+                    hands.setOptions({
+                        maxNumHands: 1,
+                        modelComplexity: 1,
+                        minDetectionConfidence: 0.7,
+                        minTrackingConfidence: 0.6
+                    });
+                    hands.onResults(onHandResults);
+
+                    cameraController = new Camera(cameraFeed, {
+                        onFrame: async () => {
+                            if (hands) {
+                                await hands.send({ image: cameraFeed });
+                            }
+                        },
+                        width: 640,
+                        height: 480
+                    });
+
+                    await cameraController.start();
+                    state.modelReady = true;
+                } catch (error) {
+                    visionBootPromise = null;
+                    throw error;
+                }
+            })();
+
+            return visionBootPromise;
+        }
+
+        async function handleStart() {
+            startButton.disabled = true;
+            restoreIntroCopy();
+            setStatus("Connecting the camera and loading hand tracking...");
+
+            try {
+                await setupVision();
+                startButton.textContent = "Play Again";
+                resetGame();
+                setStatus("Hand tracking is live. Swing your index finger to slice fruit.");
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Could not start the camera.";
+                setStatus(message);
+                helperText.textContent = "Please allow camera access and keep the browser online for MediaPipe CDN assets.";
+                introCard.classList.remove("hidden");
+                startButton.disabled = false;
+                startButton.textContent = "Retry Start";
+            }
+        }
+
+        startButton.addEventListener("click", handleStart);
+        window.addEventListener("resize", resizeCanvas);
+
+        resizeCanvas();
+        updateHud();
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
